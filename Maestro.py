@@ -193,9 +193,6 @@ def main():
         file_content = uploaded_file.read().decode("utf-8")
         objective = f"{objective}\n\n{file_content}"
 
-    # Allow the user to toggle the option to download the full exchange log
-    Download_Log = st.checkbox(label="Download Full Exchange Log", value=True)
-
     # Start task execution when the user clicks the button
     if st.button("Start Task Execution"):
         if not objective:
@@ -229,35 +226,33 @@ def main():
         if refined_output is None:
             st.error("Failed to generate the refined final output.")
         else:
-            if Download_Log:
-                exchange_log = f"Objective: {objective}\n\n"
-                if uploaded_file is not None:
-                    exchange_log += f"Text File: {uploaded_file.name}\n\n"
-                else:
-                    exchange_log += "Text File: None\n\n"
-                if image_file is not None:
-                    exchange_log += f"Image: {image_file.name}\n\n"
-                else:
-                    exchange_log += "Image: None\n\n"
-                exchange_log += "=" * 40 + " Task Breakdown " + "=" * 40 + "\n\n"
-                for i, (prompt, result) in enumerate(task_exchanges, start=1):
-                    exchange_log += f"Task {i}:\n"
-                    exchange_log += f"Prompt: {prompt}\n"
-                    exchange_log += f"Result: {result}\n\n"
-            
-                exchange_log += "=" * 40 + " Refined Final Output " + "=" * 40 + "\n\n"
-                exchange_log += refined_output
-            
-                sanitized_objective = re.sub(r'\W+', '_', objective)
-                timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-                if sanitized_objective:
-                    filename = f"Maestro_{timestamp}_{sanitized_objective[:50]}.md" if len(sanitized_objective) > 50 else f"{timestamp}_{sanitized_objective}.md"
-                else:
-                    filename = f"Maestro_{timestamp}_output.md"
-            
-                # Automatically download the output file
-                st.markdown(f'<a href="data:text/markdown;base64,{base64.b64encode(exchange_log.encode()).decode()}" download="{filename}">Click here if the download does not start automatically</a>', unsafe_allow_html=True)
-            
+            exchange_log = f"Objective: {objective}\n\n"
+            if uploaded_file is not None:
+                exchange_log += f"Text File: {uploaded_file.name}\n\n"
+            else:
+                exchange_log += "Text File: None\n\n"
+            if image_file is not None:
+                exchange_log += f"Image: {image_file.name}\n\n"
+            else:
+                exchange_log += "Image: None\n\n"
+            exchange_log += "=" * 40 + " Task Breakdown " + "=" * 40 + "\n\n"
+            for i, (prompt, result) in enumerate(task_exchanges, start=1):
+                exchange_log += f"Task {i}:\n"
+                exchange_log += f"Prompt: {prompt}\n"
+                exchange_log += f"Result: {result}\n\n"
+        
+            exchange_log += "=" * 40 + " Refined Final Output " + "=" * 40 + "\n\n"
+            exchange_log += refined_output
+        
+            sanitized_objective = re.sub(r'\W+', '_', objective)
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            if sanitized_objective:
+                filename = f"Maestro_{timestamp}_{sanitized_objective[:50]}.md" if len(sanitized_objective) > 50 else f"{timestamp}_{sanitized_objective}.md"
+            else:
+                filename = f"Maestro_{timestamp}_output.md"
+        
+            # Automatically download the output file
+            st.markdown(f'<a href="data:text/markdown;base64,{base64.b64encode(exchange_log.encode()).decode()}" download="{filename}">Click Here to Download Full Exchange Log</a>', unsafe_allow_html=True)
             st.success("Task execution completed!")
 
 if __name__ == "__main__":
