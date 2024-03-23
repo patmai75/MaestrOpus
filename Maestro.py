@@ -6,8 +6,6 @@ from PIL import Image
 import base64
 from io import BytesIO
 import os
-import tkinter as tk
-from tkinter import filedialog
 
 max_tokens = 4000
 
@@ -231,7 +229,6 @@ def main():
         if refined_output is None:
             st.error("Failed to generate the refined final output.")
         else:
-            output_path_msg = ""
             if Download_Log:
                 exchange_log = f"Objective: {objective}\n\n"
                 if uploaded_file is not None:
@@ -258,18 +255,14 @@ def main():
                 else:
                     filename = f"Maestro_{timestamp}_output.md"
             
-                # Open a file dialog to select the local folder for saving the output file
-                root = tk.Tk()
-                root.withdraw()  # Hide the main window
-                output_folder = filedialog.askdirectory(title="Select the folder to save the output file")
-                if output_folder:
-                    output_path = os.path.join(output_folder, filename)
-                    output_path_msg = f" Output file saved at: {output_path}"
-                    with open(output_path, 'w', encoding='utf-8') as file:
-                        file.write(exchange_log)
-                else:
-                    output_path_msg = " No folder selected. Output file not saved."
+                # Create a download button for the output file
+                st.download_button(
+                    label="Download Output File",
+                    data=exchange_log,
+                    file_name=filename,
+                    mime="text/markdown"
+                )
             
-            st.success(f"Task execution completed!{output_path_msg}")
+            st.success("Task execution completed!")
 if __name__ == "__main__":
     main()
