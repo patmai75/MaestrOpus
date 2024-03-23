@@ -6,6 +6,8 @@ from PIL import Image
 import base64
 from io import BytesIO
 import os
+import tkinter as tk
+from tkinter import filedialog
 
 max_tokens = 4000
 
@@ -256,13 +258,18 @@ def main():
                 else:
                     filename = f"Maestro_{timestamp}_output.md"
             
-                # Get the full path of the output file
-                output_path = os.path.join(os.getcwd(), filename)
-                output_path_msg = f" Output file saved at: {output_path}"
+                # Open a file dialog to select the local folder for saving the output file
+                root = tk.Tk()
+                root.withdraw()  # Hide the main window
+                output_folder = filedialog.askdirectory(title="Select the folder to save the output file")
+                if output_folder:
+                    output_path = os.path.join(output_folder, filename)
+                    output_path_msg = f" Output file saved at: {output_path}"
+                    with open(output_path, 'w', encoding='utf-8') as file:
+                        file.write(exchange_log)
+                else:
+                    output_path_msg = " No folder selected. Output file not saved."
             
-                with open(filename, 'w', encoding='utf-8') as file:
-                    file.write(exchange_log)
             st.success(f"Task execution completed!{output_path_msg}")
-
 if __name__ == "__main__":
     main()
