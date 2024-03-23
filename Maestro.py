@@ -255,14 +255,10 @@ def main():
                 else:
                     filename = f"Maestro_{timestamp}_output.md"
             
-                # Create a download button for the output file
-                st.download_button(
-                    label="Download Output File",
-                    data=exchange_log,
-                    file_name=filename,
-                    mime="text/markdown"
-                )
+                # Automatically download the output file
+                st.markdown(f'<a href="data:text/markdown;base64,{base64.b64encode(exchange_log.encode()).decode()}" download="{filename}">Click here if the download does not start automatically</a>', unsafe_allow_html=True)
             
             st.success("Task execution completed!")
+
 if __name__ == "__main__":
     main()
