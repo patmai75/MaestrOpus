@@ -5,24 +5,22 @@ from datetime import datetime
 from PIL import Image
 import base64
 from io import BytesIO
-import os
 
-max_tokens = 4000
+max_tokens = 4096
 
 # Set page title and favicon
-st.set_page_config(page_title="Maestro - Opus-Haiku Task Manager", page_icon=":robot_face:")
+st.set_page_config(page_title="MaestrOpus-Subagent Task Manager", page_icon=":robot_face:")
 
 # Display the title and introduction
-st.title("Maestro: Achieving Goals with Opus' Orchestration of Haiku' subagents")
-st.write("Maestro is a framework for Claude Opus to orchestrate subagents. Simply ask for a goal, and Opus will break it down and intelligently orchestrate instances of Haiku to execute subtasks, which Opus will review at the end.")
-st.write("By Patricio Mainardi (@pmainardi), adapted from Pietro Schirano (@skirano)")
+st.title("MaestrOpus: Achieving Goals with Opus' Orchestration of subagents")
+st.write("MaestrOpus is a framework for Claude Opus to orchestrate subagents. Simply ask for a goal, and Opus will break it down and intelligently orchestrate instances of subagents to execute subtasks, which Opus will review at the end.")
+st.write("By Patricio Mainardi (@pmainardi), adapted from Maestro of Pietro Schirano (@skirano)")
 
 # Set up the Anthropic API client
 @st.cache_resource
 def get_anthropic_client(api_key):
     return Anthropic(api_key=api_key)
 
-# Define Opus Orchestrator function
 # Define Opus Orchestrator function
 def opus_orchestrator(client, objective, messages=None, previous_results=None):
     try:
@@ -45,7 +43,7 @@ def opus_orchestrator(client, objective, messages=None, previous_results=None):
 
         response_text = opus_response.content[0].text
         if "The task is complete:" not in response_text:
-            st.markdown(f"Opus Orchestrator:\n{response_text}\n\nSending task to Haiku 👇")
+            st.markdown(f"Opus Orchestrator:\n{response_text}\n\nSending task to Subagent 👇")
         else:
             st.markdown(f"Opus Orchestrator:\n{response_text}")
         return response_text
@@ -54,7 +52,7 @@ def opus_orchestrator(client, objective, messages=None, previous_results=None):
         return None
     
 # Define Haiku Sub-agent function
-def haiku_sub_agent(client, prompt, previous_haiku_tasks=None):
+def haiku_sub_agent(client, model, prompt, previous_haiku_tasks=None):
     try:
         if previous_haiku_tasks is None:
             previous_haiku_tasks = []
@@ -71,14 +69,14 @@ def haiku_sub_agent(client, prompt, previous_haiku_tasks=None):
         ]
 
         haiku_response = client.messages.create(
-            model="claude-3-haiku-20240307",
+            model=model,
             max_tokens=max_tokens,
             messages=messages,
             system=system_message
         )
 
         response_text = haiku_response.content[0].text
-        st.markdown(f"Haiku Sub-agent Result:\n{response_text}\n\nTask completed, sending result to Opus 👇")
+        st.markdown(f"Sub-agent Result:\n{response_text}\n\nTask completed, sending result to Opus 👇")
         return response_text
     except Exception as e:
         st.error(f"Error in haiku_sub_agent: {str(e)}")
@@ -193,6 +191,17 @@ def main():
         file_content = uploaded_file.read().decode("utf-8")
         objective = f"{objective}\n\n{file_content}"
 
+    # Get the subagent model selection from the user
+    subagent_model = st.selectbox("Select the subagent model:", ("claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"),index=0)
+
+    #Display advice based on the selected subagent model
+    if subagent_model == "claude-3-haiku-20240307":
+        st.write("Claude 3 Haiku is the fastest and most compact model, ideal for near-instant responsiveness. It provides quick and accurate targeted performance at the lowest cost (\$0.25 per 1M input tokens, \$1.25 per 1M output tokens).")
+    elif subagent_model == "claude-3-sonnet-20240229":
+        st.write("Claude 3 Sonnet strikes an ideal balance of intelligence and speed for enterprise workloads. It offers maximum utility at a lower price compared to Opus, and is dependable and balanced for scaled deployments. The cost is \$3.00 per 1M input tokens and \$15.00 per 1M output tokens.")
+    else:
+        st.write("Claude 3 Opus is the most powerful model for highly complex tasks, providing top-level performance, intelligence, fluency, and understanding. However, it comes at a higher cost (\$15.00 per 1M input tokens, \$75.00 per 1M output tokens) and has moderately fast latency compared to the other models.")
+
     # Start task execution when the user clicks the button
     if st.button("Start Task Execution"):
         if not objective:
@@ -215,7 +224,7 @@ def main():
                 break
             else:
                 sub_task_prompt = opus_result
-                sub_task_result = haiku_sub_agent(client, sub_task_prompt, haiku_tasks)
+                sub_task_result = haiku_sub_agent(client, subagent_model, sub_task_prompt, haiku_tasks)
                 if sub_task_result is None:
                     break
                 haiku_tasks.append(f"Task: {sub_task_prompt}\nResult: {sub_task_result}")
@@ -247,9 +256,9 @@ def main():
             sanitized_objective = re.sub(r'\W+', '_', objective)
             timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
             if sanitized_objective:
-                filename = f"Maestro_{timestamp}_{sanitized_objective[:50]}.md" if len(sanitized_objective) > 50 else f"{timestamp}_{sanitized_objective}.md"
+                filename = f"MaestrOpus_{timestamp}_{sanitized_objective[:50]}.md" if len(sanitized_objective) > 50 else f"{timestamp}_{sanitized_objective}.md"
             else:
-                filename = f"Maestro_{timestamp}_output.md"
+                filename = f"MaestrOpus_{timestamp}_output.md"
         
             # Automatically download the output file
             st.markdown(f'<a href="data:text/markdown;base64,{base64.b64encode(exchange_log.encode()).decode()}" download="{filename}">Click Here to Download Full Exchange Log</a>', unsafe_allow_html=True)
