@@ -9,7 +9,7 @@ from io import BytesIO
 max_tokens = 4096
 
 # Set page title and favicon
-st.set_page_config(page_title="MaestrOpus-Subagent Task Manager", page_icon=":robot_face:")
+st.set_page_config(page_title="MaestrOpus: Subagent Task Manager", page_icon=":robot_face:")
 
 # Display the title and introduction
 st.title("MaestrOpus: Achieving Goals with Opus' Orchestration of subagents")
@@ -51,13 +51,13 @@ def opus_orchestrator(client, objective, messages=None, previous_results=None):
         st.error(f"Error in opus_orchestrator: {str(e)}")
         return None
     
-# Define Haiku Sub-agent function
-def haiku_sub_agent(client, model, prompt, previous_haiku_tasks=None):
+# Define Sub-agent function
+def sub_agent(client, model, prompt, previous_tasks=None):
     try:
-        if previous_haiku_tasks is None:
-            previous_haiku_tasks = []
+        if previous_tasks is None:
+            previous_tasks = []
 
-        system_message = "Previous Haiku tasks:\n" + "\n".join(previous_haiku_tasks)
+        system_message = "Previous tasks:\n" + "\n".join(previous_tasks)
 
         messages = [
             {
@@ -68,18 +68,18 @@ def haiku_sub_agent(client, model, prompt, previous_haiku_tasks=None):
             }
         ]
 
-        haiku_response = client.messages.create(
+        subagent_response = client.messages.create(
             model=model,
             max_tokens=max_tokens,
             messages=messages,
             system=system_message
         )
 
-        response_text = haiku_response.content[0].text
+        response_text = subagent_response.content[0].text
         st.markdown(f"Sub-agent Result:\n{response_text}\n\nTask completed, sending result to Opus 👇")
         return response_text
     except Exception as e:
-        st.error(f"Error in haiku_sub_agent: {str(e)}")
+        st.error(f"Error in sub_agent: {str(e)}")
         return None
 
 # Define Opus Refine function
@@ -209,7 +209,7 @@ def main():
             return
 
         task_exchanges = []
-        haiku_tasks = []
+        subagent_tasks = []
 
         stop_button = st.button("Stop Execution")
 
@@ -224,10 +224,10 @@ def main():
                 break
             else:
                 sub_task_prompt = opus_result
-                sub_task_result = haiku_sub_agent(client, subagent_model, sub_task_prompt, haiku_tasks)
+                sub_task_result = sub_agent(client, subagent_model, sub_task_prompt, subagent_tasks)
                 if sub_task_result is None:
                     break
-                haiku_tasks.append(f"Task: {sub_task_prompt}\nResult: {sub_task_result}")
+                subagent_tasks.append(f"Task: {sub_task_prompt}\nResult: {sub_task_result}")
                 task_exchanges.append((sub_task_prompt, sub_task_result))
 
         refined_output = opus_refine(client, objective, messages, [result for _, result in task_exchanges])
