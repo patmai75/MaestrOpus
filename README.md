@@ -2,6 +2,9 @@
 
 **MaestrOpus: Achieving Goals with Opus' Orchestration of Subagents** is an innovative adaptation of the original [Maestro project](https://github.com/Doriandarko/maestro) developed by Pietro Schirano (@skirano). This version extends the original framework to create a more interactive and user-friendly experience through a web application powered by Streamlit.
 
+## The link to use the app:
+https://maestro.streamlit.app/
+
 ## Introduction
 MaestrOpus is a web application that leverages the power of Claude Opus to orchestrate subagents, breaking down objectives into manageable sub-tasks, executing them with instances of Haiku, Sonnet or Opus, and reviewing the outcomes to achieve a cohesive final result. This adaptation enhances the user interaction by allowing objectives to be set and monitored in real-time through a streamlined interface.
 This project is a tribute to the ingenuity of Pietro Schirano's original Maestro, building upon its foundation to explore new possibilities in task orchestration and AI-driven project management.
