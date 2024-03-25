@@ -5,6 +5,9 @@ from datetime import datetime
 from PIL import Image
 import base64
 from io import BytesIO
+import os
+import zipfile
+import tempfile
 
 max_tokens = 4096
 
@@ -83,14 +86,14 @@ def sub_agent(client, model, prompt, previous_tasks=None):
         return None
 
 # Define Opus Refine function
-def opus_refine(client, objective, messages, sub_task_results):
+def opus_refine(client, objective, messages, sub_task_results, extract_code):
     try:
         st.subheader(f"\nCalling Opus to provide the refined final output for your objective:")
         messages_with_results = [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": f"Objective: {objective}\n\nSub-task results:\n" + "\n".join(sub_task_results) + "\n\nPlease review and refine the sub-task results into a cohesive final output. add any missing information or details as needed. When working on code projects make sure to include the code implementation by file."}
+                    {"type": "text", "text": f"Objective: {objective}\n\nSub-task results:\n" + "\n".join(sub_task_results) + "\n\nPlease review and refine the sub-task results into a cohesive final output. Add any missing information or details as needed." + (" When working on code projects make sure to include the code implementation by file. When displaying the file name it is VERY important you always format it this way 'Filename: index.html' for instance, of course, the file name can be different." if extract_code else "")}
                 ] + messages
             }
         ]
@@ -196,11 +199,14 @@ def main():
 
     #Display advice based on the selected subagent model
     if subagent_model == "claude-3-haiku-20240307":
-        st.write("Claude 3 Haiku is the fastest and most compact model, ideal for near-instant responsiveness. It provides quick and accurate targeted performance at the lowest cost (\$0.25 per 1M input tokens, \$1.25 per 1M output tokens).")
+        st.write(r"Claude 3 Haiku is the fastest and most compact model, ideal for near-instant responsiveness. It provides quick and accurate targeted performance at the lowest cost (\$0.25 per 1M input tokens, \$1.25 per 1M output tokens).")
     elif subagent_model == "claude-3-sonnet-20240229":
-        st.write("Claude 3 Sonnet strikes an ideal balance of intelligence and speed for enterprise workloads. It offers maximum utility at a lower price compared to Opus, and is dependable and balanced for scaled deployments. The cost is \$3.00 per 1M input tokens and \$15.00 per 1M output tokens.")
+        st.write(r"Claude 3 Sonnet strikes an ideal balance of intelligence and speed for enterprise workloads. It offers maximum utility at a lower price compared to Opus, and is dependable and balanced for scaled deployments. The cost is \$3.00 per 1M input tokens and \$15.00 per 1M output tokens.")
     else:
-        st.write("Claude 3 Opus is the most powerful model for highly complex tasks, providing top-level performance, intelligence, fluency, and understanding. However, it comes at a higher cost (\$15.00 per 1M input tokens, \$75.00 per 1M output tokens) and has moderately fast latency compared to the other models.")
+        st.write(r"Claude 3 Opus is the most powerful model for highly complex tasks, providing top-level performance, intelligence, fluency, and understanding. However, it comes at a higher cost (\$15.00 per 1M input tokens, \$75.00 per 1M output tokens) and has moderately fast latency compared to the other models.")
+
+    # Option to enable or disable code extraction
+    extract_code = st.checkbox("Extract code files from the final output", value=True)
 
     # Start task execution when the user clicks the button
     if st.button("Start Task Execution"):
@@ -230,7 +236,7 @@ def main():
                 subagent_tasks.append(f"Task: {sub_task_prompt}\nResult: {sub_task_result}")
                 task_exchanges.append((sub_task_prompt, sub_task_result))
 
-        refined_output = opus_refine(client, objective, messages, [result for _, result in task_exchanges])
+        refined_output = opus_refine(client, objective, messages, [result for _, result in task_exchanges], extract_code)
 
         if refined_output is None:
             st.error("Failed to generate the refined final output.")
@@ -262,6 +268,37 @@ def main():
         
             # Automatically download the output file
             st.markdown(f'<a href="data:text/markdown;base64,{base64.b64encode(exchange_log.encode()).decode()}" download="{filename}">Click Here to Download Full Exchange Log</a>', unsafe_allow_html=True)
+
+            if extract_code:
+                # Extract code files from the final output
+                code_blocks = re.findall(r'Filename: (\S+)\s*```[\w]*\n(.*?)\n```', refined_output, re.DOTALL)
+
+                if code_blocks:
+                    # Create a temporary directory to store the code files
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        # Create code files in the temporary directory
+                        for file_name, code_content in code_blocks:
+                            file_path = os.path.join(temp_dir, file_name)
+                            with open(file_path, 'w', encoding='utf-8') as file:
+                                file.write(code_content)
+
+                        # Create a ZIP file containing the code files
+                        zip_filename = f"{os.path.splitext(filename)[0]}_code_files.zip"
+                        zip_path = os.path.join(temp_dir, zip_filename)
+                        with zipfile.ZipFile(zip_path, 'w') as zipf:
+                            for file_name, _ in code_blocks:
+                                file_path = os.path.join(temp_dir, file_name)
+                                zipf.write(file_path, file_name)
+
+                        # Read the ZIP file contents
+                        with open(zip_path, 'rb') as file:
+                            zip_data = file.read()
+
+                    # Provide a download link for the ZIP file
+                    st.markdown(f'<a href="data:application/zip;base64,{base64.b64encode(zip_data).decode()}" download="{zip_filename}">Click Here to Download Code Files</a>', unsafe_allow_html=True)
+                else:
+                    st.info("No code files were generated.")
+
             st.success("Task execution completed!")
 
 if __name__ == "__main__":
