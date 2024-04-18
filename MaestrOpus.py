@@ -174,7 +174,7 @@ def validate_api_key(api_key):
         
         return True
     except Exception as e:
-        st.error("fInvalid API key. Please check your API key and try again. Error. "{response})
+        st.error("fInvalid API key. Please check your API key and try again. Error. {response}")
         return False
 
 def main():
