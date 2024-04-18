@@ -8,6 +8,7 @@ from io import BytesIO
 import os
 import zipfile
 import tempfile
+import pdfplumber
 
 max_tokens = 4096
 
@@ -141,7 +142,6 @@ def process_uploaded_file(uploaded_file):
                 return "\n".join(full_text)
             elif file_type == "pdf":
                 # Requires `PyPDF2` or `pdfplumber` library
-                import pdfplumber
                 with pdfplumber.open(uploaded_file) as pdf:
                     full_text = "\n".join(page.extract_text() for page in pdf.pages if page.extract_text() is not None)
                 return full_text
