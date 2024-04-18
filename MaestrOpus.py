@@ -124,6 +124,35 @@ def read_file(file_path):
         st.error(f"Error reading file: {str(e)}")
         return None
 
+# Function to handle different file types
+def process_uploaded_file(uploaded_file):
+    if uploaded_file is not None:
+        # Check the file type from the uploaded file
+        file_type = uploaded_file.type.split('/')[1]
+        try:
+            if file_type in ["plain", "csv", "json", "html", "markdown"]:
+                # These are readable as plain text
+                return uploaded_file.read().decode("utf-8")
+            elif file_type == "msword" or uploaded_file.name.endswith('.docx'):
+                # Requires `python-docx` library
+                import docx
+                doc = docx.Document(uploaded_file)
+                full_text = [paragraph.text for paragraph in doc.paragraphs]
+                return "\n".join(full_text)
+            elif file_type == "pdf":
+                # Requires `PyPDF2` or `pdfplumber` library
+                import pdfplumber
+                with pdfplumber.open(uploaded_file) as pdf:
+                    full_text = "\n".join(page.extract_text() for page in pdf.pages if page.extract_text() is not None)
+                return full_text
+            else:
+                st.error("Unsupported file type: " + file_type)
+                return None
+        except Exception as e:
+            st.error(f"Failed to process uploaded file: {str(e)}")
+            return None
+    return None
+
 # Function to validate the API key
 def validate_api_key(api_key):
     try:
@@ -190,9 +219,10 @@ def main():
         )
 
     # Process the uploaded text file
-    if uploaded_file is not None:
-        file_content = uploaded_file.read().decode("utf-8")
-        objective = f"{objective}\n\n{file_content}"
+    if uploaded_file:
+        file_content = process_uploaded_file(uploaded_file)
+        if file_content:
+            objective = f"{objective}\n\n{file_content}"
 
     # Get the subagent model selection from the user
     subagent_model = st.selectbox("Select the subagent model:", ("claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"),index=0)
