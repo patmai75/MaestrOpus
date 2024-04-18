@@ -172,10 +172,17 @@ def validate_api_key(api_key):
             ]
         )
         
-        return True
+        # Optionally, check if the response is as expected
+        if response and 'content' in response.messages[0] and 'text' in response.messages[0]['content'][0]:
+            return True
+        else:
+            st.error("The API key is valid, but the response from the server was not as expected.")
+            return False
+
     except Exception as e:
-        st.error(f"Invalid API key. Please check your API key and try again. Error. {response}")
+        st.error(f"Invalid API key. Please check your API key and try again. Error: {str(e)}")
         return False
+
 
 def main():
     # Get the Anthropic API key from the user
